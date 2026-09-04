@@ -31,14 +31,15 @@ Usage:
     python3 05_active_speaker.py <video_id>
 
 Reads:  data/raw/<video_id>.mp4
-        data/audio/<video_id>.wav
         data/episodes/<video_id>_face_tracks.json
         data/episodes/<video_id>_transcript.json
-Writes: data/episodes/<video_id>_speaker_attribution.json
+Writes: data/audio/<video_id>.wav (extracted automatically if not already present)
+        data/episodes/<video_id>_speaker_attribution.json
 """
 import argparse
 import json
 import os
+import subprocess
 
 import cv2
 import numpy as np
@@ -49,6 +50,20 @@ AUDIO_HOP_SEC = 0.02        # 50 Hz energy signal
 MOUTH_PAD_SCALE = 0.9       # mouth crop half-width, as a fraction of mouth_left-mouth_right distance
 MIN_CORR_CONFIDENT = 0.15   # below this, flag segment as "uncertain" rather than force an assignment
 MIN_OVERLAP_SAMPLES = 3     # need at least this many aligned samples to trust a correlation
+
+
+def ensure_audio_extracted(video_path, wav_path):
+    """Extracts mono 16kHz audio via ffmpeg if it doesn't already exist."""
+    if os.path.isfile(wav_path) and os.path.getsize(wav_path) > 0:
+        return
+    os.makedirs(os.path.dirname(wav_path), exist_ok=True)
+    print(f"Extracting audio -> {wav_path}")
+    ret = subprocess.call(
+        f'ffmpeg -y -i "{video_path}" -vn -ac 1 -ar {AUDIO_SR} -acodec pcm_s16le "{wav_path}" -loglevel error',
+        shell=True)
+    if ret != 0 or not os.path.isfile(wav_path):
+        raise SystemExit(f"ffmpeg failed to extract audio from {video_path} (exit code {ret}). "
+                          f"Check that ffmpeg is installed and on PATH, and that the video path is correct.")
 
 
 def compute_audio_energy(wav_path):
@@ -90,7 +105,6 @@ def mouth_motion_signal(cap, native_fps, track):
             prev_crop = None
             continue
         if prev_crop is not None:
-            # Resize to match in case mouth box size changed between frames.
             ph, pw = prev_crop.shape
             crop_r = cv2.resize(crop, (pw, ph))
             diff = np.mean(np.abs(crop_r.astype(np.float32) - prev_crop.astype(np.float32)))
@@ -139,15 +153,16 @@ def main():
     with open(transcript_path, encoding="utf-8") as f:
         transcript = json.load(f)["transcript"]
 
+    ensure_audio_extracted(video_path, wav_path)
+
     print("Computing audio energy envelope...")
     audio_times, audio_energy = compute_audio_energy(wav_path)
 
     cap = cv2.VideoCapture(video_path)
     native_fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # Precompute each track's interpolated motion signal on the audio time grid.
     print("Computing mouth-motion signals per track...")
-    track_signals = []  # list of dicts: shot_id, track_id, t_range, signal(on audio_times grid)
+    track_signals = []
     for shot in track_data["shots"]:
         for tr in shot["tracks"]:
             ts, motions = mouth_motion_signal(cap, native_fps, tr)
@@ -174,7 +189,7 @@ def main():
         for tsig in track_signals:
             lo, hi = tsig["t_range"]
             if hi < seg_start or lo > seg_end:
-                continue  # no temporal overlap with this segment at all
+                continue
             corr, n = pearson_corr(seg_audio, tsig["signal"])
             if corr is None:
                 continue
@@ -185,16 +200,6 @@ def main():
 
         candidates.sort(key=lambda c: c["correlation"], reverse=True)
 
-        # Decision logic: correlation is a disambiguator between multiple candidates,
-        # not an absolute gate. If there's only one face on screen for this segment,
-        # visual presence itself is already decent evidence -- rejecting it whenever
-        # the noisy frame-diff/audio correlation happens to dip below some fixed
-        # threshold throws away true positives (this was checked: with an absolute
-        # threshold, ~50% of genuinely single-speaker segments in this clip were
-        # marked "uncertain" despite being visually unambiguous). We only reject a
-        # single candidate on a strong ANTI-correlation, which is a real signal that
-        # the one visible face is staying still while audio energy is present --
-        # e.g. an off-screen speaker over a reaction shot.
         STRONG_ANTICORR_REJECT = -0.35
         if len(candidates) == 0:
             speaker_id, status = None, "uncertain_no_confident_face"

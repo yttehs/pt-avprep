@@ -1,6 +1,7 @@
 # Data: videos, audio, frames, intermediate work -- large, regenerable, not code
 data/
 outputs/
+*.swp
 
 # Cloned third-party repos (TalkNet-ASD etc.) -- documented in README, not tracked
 third_party/
