@@ -1,0 +1,13 @@
+# Step 5b (real TalkNet-ASD model). Needs a CUDA-matched torch build --
+# install torch/torchvision/torchaudio FIRST following the official selector
+# at https://pytorch.org/get-started/locally/ for your exact CUDA version,
+# THEN install the rest of this file, so pip doesn't silently grab a CPU-only
+# or mismatched-CUDA torch build.
+opencv-python>=4.13.0
+numpy
+scipy
+scikit-learn
+pandas
+tqdm
+gdown
+python_speech_features

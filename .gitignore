@@ -1,0 +1,24 @@
+# Data: videos, audio, frames, intermediate work -- large, regenerable, not code
+data/
+outputs/
+
+# Cloned third-party repos (TalkNet-ASD etc.) -- documented in README, not tracked
+third_party/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv_*/
+*.egg-info/
+
+# Model checkpoints, language data -- large binaries
+*.model
+*.pth
+*.onnx
+*.traineddata
+
+# OS/editor cruft
+.DS_Store
+.vscode/
+.idea/

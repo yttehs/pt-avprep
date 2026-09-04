@@ -1,0 +1,181 @@
+{
+  "video_id": "portuguese_01_clip90",
+  "transcript": [
+    {
+      "segment_id": 0,
+      "start_sec": 0.0,
+      "end_sec": 1.47,
+      "mid_sec": 0.73,
+      "text_pt": "Olá pessoal!",
+      "text_en_ref": "Hi guys!"
+    },
+    {
+      "segment_id": 1,
+      "start_sec": 1.47,
+      "end_sec": 5.07,
+      "mid_sec": 3.27,
+      "text_pt": "Bem-vindos ao primeiro episódio de Easy European Portuguese.",
+      "text_en_ref": "Welcome to the first episode of tasy European Portuguese."
+    },
+    {
+      "segment_id": 2,
+      "start_sec": 5.07,
+      "end_sec": 6.94,
+      "mid_sec": 6.01,
+      "text_pt": "Finalmente!",
+      "text_en_ref": "Finally!"
+    },
+    {
+      "segment_id": 3,
+      "start_sec": 26.56,
+      "end_sec": 28.7,
+      "mid_sec": 27.63,
+      "text_pt": "Chamo-me Liz Sharma, sou inglesa",
+      "text_en_ref": "My name is Liz Sharma, I'm English"
+    },
+    {
+      "segment_id": 4,
+      "start_sec": 28.7,
+      "end_sec": 33.1,
+      "mid_sec": 30.9,
+      "text_pt": "e fiz a minha licenciatura em português há 10 anos.",
+      "text_en_ref": "and I did my degree in Portuguese 10 years ago."
+    },
+    {
+      "segment_id": 5,
+      "start_sec": 33.1,
+      "end_sec": 36.44,
+      "mid_sec": 34.77,
+      "text_pt": "Agora sou professora de português aqui em Lisboa.",
+      "text_en_ref": "Now I'm a Portuguese teacher here in Lisbon."
+    },
+    {
+      "segment_id": 6,
+      "start_sec": 36.44,
+      "end_sec": 38.97,
+      "mid_sec": 37.7,
+      "text_pt": "Então, vocês querem aprender português comigo?",
+      "text_en_ref": "So, do you guys want to learn Portuguese with me?"
+    },
+    {
+      "segment_id": 7,
+      "start_sec": 47.65,
+      "end_sec": 49.52,
+      "mid_sec": 48.59,
+      "text_pt": "Quem são os portugueses famosos",
+      "text_en_ref": "Who are the famous Portuguese people"
+    },
+    {
+      "segment_id": 8,
+      "start_sec": 49.52,
+      "end_sec": 51.65,
+      "mid_sec": 50.59,
+      "text_pt": "que o resto do mundo deve conhecer?",
+      "text_en_ref": "that the rest of the world should know?"
+    },
+    {
+      "segment_id": 9,
+      "start_sec": 51.65,
+      "end_sec": 54.72,
+      "mid_sec": 53.19,
+      "text_pt": "Temos o exemplo de uma atriz que é luso-descendente,",
+      "text_en_ref": "We have the example of an actress who has Portuguese roots,"
+    },
+    {
+      "segment_id": 10,
+      "start_sec": 54.72,
+      "end_sec": 57.12,
+      "mid_sec": 55.92,
+      "text_pt": "a Daniela Ruah, que é dos Estados Unidos.",
+      "text_en_ref": "Daniela Ruah, who is from the United States."
+    },
+    {
+      "segment_id": 11,
+      "start_sec": 57.12,
+      "end_sec": 59.13,
+      "mid_sec": 58.12,
+      "text_pt": "Ela participa em Investigação Criminal,",
+      "text_en_ref": "She appears in Criminal Investigation,"
+    },
+    {
+      "segment_id": 12,
+      "start_sec": 59.13,
+      "end_sec": 60.86,
+      "mid_sec": 60.0,
+      "text_pt": "que dá no programa da Fox.",
+      "text_en_ref": "which is a show on Fox."
+    },
+    {
+      "segment_id": 13,
+      "start_sec": 60.86,
+      "end_sec": 65.13,
+      "mid_sec": 62.99,
+      "text_pt": "Assim de repente, Mariza. Mariza.",
+      "text_en_ref": "Under pressure like this, Mariza. Mariza."
+    },
+    {
+      "segment_id": 14,
+      "start_sec": 65.13,
+      "end_sec": 66.6,
+      "mid_sec": 65.86,
+      "text_pt": "O que é fado?",
+      "text_en_ref": "What's fado?"
+    },
+    {
+      "segment_id": 15,
+      "start_sec": 66.6,
+      "end_sec": 70.07,
+      "mid_sec": 68.33,
+      "text_pt": "Fado é um estilo de música portuguesa,",
+      "text_en_ref": "Fado is a Portuguese musical genre,"
+    },
+    {
+      "segment_id": 16,
+      "start_sec": 70.07,
+      "end_sec": 75.28,
+      "mid_sec": 72.67,
+      "text_pt": "que nós portugueses começamos a cantar por uma questão de...",
+      "text_en_ref": "that we Portuguese, started singing due to..."
+    },
+    {
+      "segment_id": 17,
+      "start_sec": 75.28,
+      "end_sec": 77.94,
+      "mid_sec": 76.61,
+      "text_pt": "começou com a Amália Rodrigues,",
+      "text_en_ref": "it started with Amalia Rodrigues,"
+    },
+    {
+      "segment_id": 18,
+      "start_sec": 77.94,
+      "end_sec": 82.08,
+      "mid_sec": 80.01,
+      "text_pt": "foi a nossa embaixadora e a seguir vieram muito mais.",
+      "text_en_ref": "who was our ambassador and afterwards many more came."
+    },
+    {
+      "segment_id": 19,
+      "start_sec": 82.08,
+      "end_sec": 86.09,
+      "mid_sec": 84.09,
+      "text_pt": "Uma delas a Mariza, que canta um fado,",
+      "text_en_ref": "One of them being Mariza, who sings a Slightly"
+    },
+    {
+      "segment_id": 20,
+      "start_sec": 86.09,
+      "end_sec": 88.76,
+      "mid_sec": 87.43,
+      "text_pt": "ligeiramente diferente do que a Amália cantava,",
+      "text_en_ref": "different fado from what Amalia sang,"
+    },
+    {
+      "segment_id": 21,
+      "start_sec": 88.76,
+      "end_sec": 90.09,
+      "mid_sec": 89.43,
+      "text_pt": "só aquele fado assim um bocado mais sofrido.",
+      "text_en_ref": "that fado a little bit more about suffering."
+    }
+  ]
+}

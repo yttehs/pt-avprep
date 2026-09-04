@@ -1,0 +1,7 @@
+# Step 4 (face detection/tracking). Pulls in TensorFlow via MTCNN --
+# keep this in its own venv, don't mix with the torch-based requirements below.
+# Recommended Python: 3.10 or 3.11 (broadest tensorflow wheel availability).
+opencv-python>=4.13.0
+numpy
+mtcnn>=1.0.0
+tensorflow-cpu>=2.21.0

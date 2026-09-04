@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "video_path": "/home/claude/pt_avprep/scripts/../data/raw/portuguese_01_clip90.mp4",
+    "width": 640,
+    "height": 360,
+    "native_fps": 29.97002997002997,
+    "sample_fps_requested": 8.0,
+    "sample_fps_actual": 7.492507492507492,
+    "duration_sec": 90.05663333333334,
+    "pt_line_frac": [
+      0.0,
+      0.7833333333333333,
+      1.0,
+      0.8527777777777777
+    ],
+    "en_line_frac": [
+      0.0,
+      0.8555555555555555,
+      1.0,
+      0.9055555555555556
+    ],
+    "params": {
+      "white_thresh": 190,
+      "density_on_thresh": 0.012,
+      "sim_thresh": 0.55,
+      "min_segment_sec": 0.3
+    }
+  },
+  "segments": [
+    {
+      "segment_id": 0,
+      "start_sec": 0.0,
+      "end_sec": 1.47,
+      "mean_density": 0.0221,
+      "n_samples": 11
+    },
+    {
+      "segment_id": 1,
+      "start_sec": 1.47,
+      "end_sec": 5.07,
+      "mean_density": 0.1079,
+      "n_samples": 27
+    },
+    {
+      "segment_id": 2,
+      "start_sec": 5.07,
+      "end_sec": 6.94,
+      "mean_density": 0.0218,
+      "n_samples": 14
+    },
+    {
+      "segment_id": 3,
+      "start_sec": 26.56,
+      "end_sec": 28.7,
+      "mean_density": 0.0527,
+      "n_samples": 16
+    },
+    {
+      "segment_id": 4,
+      "start_sec": 28.7,
+      "end_sec": 33.1,
+      "mean_density": 0.0793,
+      "n_samples": 33
+    },
+    {
+      "segment_id": 5,
+      "start_sec": 33.1,
+      "end_sec": 36.44,
+      "mean_density": 0.0847,
+      "n_samples": 25
+    },
+    {
+      "segment_id": 6,
+      "start_sec": 36.44,
+      "end_sec": 38.97,
+      "mean_density": 0.0829,
+      "n_samples": 19
+    },
+    {
+      "segment_id": 7,
+      "start_sec": 47.65,
+      "end_sec": 49.52,
+      "mean_density": 0.0576,
+      "n_samples": 14
+    },
+    {
+      "segment_id": 8,
+      "start_sec": 49.52,
+      "end_sec": 51.65,
+      "mean_density": 0.0582,
+      "n_samples": 16
+    },
+    {
+      "segment_id": 9,
+      "start_sec": 51.65,
+      "end_sec": 54.72,
+      "mean_density": 0.0837,
+      "n_samples": 23
+    },
+    {
+      "segment_id": 10,
+      "start_sec": 54.72,
+      "end_sec": 57.12,
+      "mean_density": 0.0681,
+      "n_samples": 18
+    },
+    {
+      "segment_id": 11,
+      "start_sec": 57.12,
+      "end_sec": 59.13,
+      "mean_density": 0.0615,
+      "n_samples": 15
+    },
+    {
+      "segment_id": 12,
+      "start_sec": 59.13,
+      "end_sec": 60.86,
+      "mean_density": 0.0433,
+      "n_samples": 13
+    },
+    {
+      "segment_id": 13,
+      "start_sec": 60.86,
+      "end_sec": 65.13,
+      "mean_density": 0.0513,
+      "n_samples": 32
+    },
+    {
+      "segment_id": 14,
+      "start_sec": 65.13,
+      "end_sec": 66.6,
+      "mean_density": 0.0225,
+      "n_samples": 11
+    },
+    {
+      "segment_id": 15,
+      "start_sec": 66.6,
+      "end_sec": 70.07,
+      "mean_density": 0.0647,
+      "n_samples": 26
+    },
+    {
+      "segment_id": 16,
+      "start_sec": 70.07,
+      "end_sec": 75.28,
+      "mean_density": 0.1022,
+      "n_samples": 39
+    },
+    {
+      "segment_id": 17,
+      "start_sec": 75.28,
+      "end_sec": 77.94,
+      "mean_density": 0.0566,
+      "n_samples": 20
+    },
+    {
+      "segment_id": 18,
+      "start_sec": 77.94,
+      "end_sec": 82.08,
+      "mean_density": 0.0845,
+      "n_samples": 31
+    },
+    {
+      "segment_id": 19,
+      "start_sec": 82.08,
+      "end_sec": 86.09,
+      "mean_density": 0.0657,
+      "n_samples": 30
+    },
+    {
+      "segment_id": 20,
+      "start_sec": 86.09,
+      "end_sec": 88.76,
+      "mean_density": 0.0804,
+      "n_samples": 20
+    },
+    {
+      "segment_id": 21,
+      "start_sec": 88.76,
+      "end_sec": 90.09,
+      "mean_density": 0.074,
+      "n_samples": 10
+    }
+  ]
+}

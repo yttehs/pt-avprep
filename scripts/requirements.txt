@@ -1,0 +1,29 @@
+# Core video/image processing
+opencv-python>=4.13.0
+numpy
+
+# Step 1: shot boundary detection
+scenedetect>=0.7.1
+
+# Step 3: OCR
+pytesseract>=0.3.10
+# System dependency (not pip): tesseract-ocr + tesseract-ocr-por
+#   Ubuntu/Debian: apt-get install -y tesseract-ocr tesseract-ocr-por
+
+# Step 4: face detection
+mtcnn>=1.0.0
+tensorflow-cpu>=2.21.0   # MTCNN's backend. Swap for tensorflow (GPU build) if available.
+
+# Step 5: audio energy + correlation
+librosa>=1.0.0
+
+# Debug plots (step 2)
+matplotlib
+
+# --- Step 5b (05b_active_speaker_talknet.py) only, needs a CUDA GPU ---
+# Not installed/testable in the sandbox this pipeline was built in.
+# torch, torchvision, torchaudio   # install matching your CUDA version
+# gdown
+# python_speech_features
+# pandas
+# (scipy, scikit-learn already covered above)

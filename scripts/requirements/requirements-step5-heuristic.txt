@@ -1,0 +1,6 @@
+# Step 5 (heuristic ASD baseline). Only needs librosa on top of the core deps --
+# librosa pulls in numba/llvmlite, which (like tensorflow) lags behind the very
+# newest Python releases. Recommended Python: 3.10 or 3.11.
+opencv-python>=4.13.0
+numpy
+librosa>=1.0.0

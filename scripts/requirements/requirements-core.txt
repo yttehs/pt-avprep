@@ -1,0 +1,10 @@
+# Steps 1-3 (shot detection, caption segmentation, OCR). No heavy ML frameworks --
+# should install cleanly on almost any Python 3.8-3.12.
+opencv-python>=4.13.0
+numpy
+scenedetect>=0.7.1
+pytesseract>=0.3.10
+Pillow
+matplotlib
+# System dependency (not pip):
+#   apt-get install -y tesseract-ocr tesseract-ocr-por

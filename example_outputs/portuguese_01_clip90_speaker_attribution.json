@@ -1,0 +1,369 @@
+{
+  "video_id": "portuguese_01_clip90",
+  "attribution": [
+    {
+      "segment_id": 0,
+      "start_sec": 0.0,
+      "end_sec": 1.47,
+      "text_pt": "Olá pessoal!",
+      "assigned_speaker": "shot0_track0",
+      "status": "assigned_single_candidate",
+      "candidates": [
+        {
+          "shot_id": 0,
+          "track_id": 0,
+          "correlation": 0.2079,
+          "n_samples": 64
+        }
+      ]
+    },
+    {
+      "segment_id": 1,
+      "start_sec": 1.47,
+      "end_sec": 5.07,
+      "text_pt": "Bem-vindos ao primeiro episódio de Easy European Portuguese.",
+      "assigned_speaker": "shot0_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 0,
+          "track_id": 0,
+          "correlation": -0.2603,
+          "n_samples": 180
+        }
+      ]
+    },
+    {
+      "segment_id": 2,
+      "start_sec": 5.07,
+      "end_sec": 6.94,
+      "text_pt": "Finalmente!",
+      "assigned_speaker": "shot0_track2",
+      "status": "assigned_multi_candidate",
+      "candidates": [
+        {
+          "shot_id": 0,
+          "track_id": 2,
+          "correlation": 0.8526,
+          "n_samples": 8
+        },
+        {
+          "shot_id": 0,
+          "track_id": 0,
+          "correlation": 0.4509,
+          "n_samples": 37
+        }
+      ]
+    },
+    {
+      "segment_id": 3,
+      "start_sec": 26.56,
+      "end_sec": 28.7,
+      "text_pt": "Chamo-me Liz Sharma, sou inglesa",
+      "assigned_speaker": "shot7_track0",
+      "status": "assigned_single_candidate",
+      "candidates": [
+        {
+          "shot_id": 7,
+          "track_id": 0,
+          "correlation": 0.2863,
+          "n_samples": 92
+        }
+      ]
+    },
+    {
+      "segment_id": 4,
+      "start_sec": 28.7,
+      "end_sec": 33.1,
+      "text_pt": "e fiz a minha licenciatura em português há 10 anos.",
+      "assigned_speaker": "shot8_track1",
+      "status": "assigned_multi_candidate",
+      "candidates": [
+        {
+          "shot_id": 8,
+          "track_id": 1,
+          "correlation": 0.1944,
+          "n_samples": 20
+        },
+        {
+          "shot_id": 8,
+          "track_id": 0,
+          "correlation": -0.1623,
+          "n_samples": 99
+        }
+      ]
+    },
+    {
+      "segment_id": 5,
+      "start_sec": 33.1,
+      "end_sec": 36.44,
+      "text_pt": "Agora sou professora de português aqui em Lisboa.",
+      "assigned_speaker": null,
+      "status": "uncertain_anticorrelated_mouth",
+      "candidates": [
+        {
+          "shot_id": 11,
+          "track_id": 0,
+          "correlation": -0.5485,
+          "n_samples": 17
+        }
+      ]
+    },
+    {
+      "segment_id": 6,
+      "start_sec": 36.44,
+      "end_sec": 38.97,
+      "text_pt": "Então, vocês querem aprender português comigo?",
+      "assigned_speaker": "shot11_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 11,
+          "track_id": 0,
+          "correlation": -0.2693,
+          "n_samples": 127
+        }
+      ]
+    },
+    {
+      "segment_id": 7,
+      "start_sec": 47.65,
+      "end_sec": 49.52,
+      "text_pt": "Quem são os portugueses famosos",
+      "assigned_speaker": "shot12_track0",
+      "status": "assigned_single_candidate",
+      "candidates": [
+        {
+          "shot_id": 12,
+          "track_id": 0,
+          "correlation": 0.2571,
+          "n_samples": 94
+        }
+      ]
+    },
+    {
+      "segment_id": 8,
+      "start_sec": 49.52,
+      "end_sec": 51.65,
+      "text_pt": "que o resto do mundo deve conhecer?",
+      "assigned_speaker": null,
+      "status": "uncertain_anticorrelated_mouth",
+      "candidates": [
+        {
+          "shot_id": 12,
+          "track_id": 0,
+          "correlation": -0.392,
+          "n_samples": 107
+        }
+      ]
+    },
+    {
+      "segment_id": 9,
+      "start_sec": 51.65,
+      "end_sec": 54.72,
+      "text_pt": "Temos o exemplo de uma atriz que é luso-descendente,",
+      "assigned_speaker": "shot12_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 12,
+          "track_id": 0,
+          "correlation": 0.0656,
+          "n_samples": 154
+        }
+      ]
+    },
+    {
+      "segment_id": 10,
+      "start_sec": 54.72,
+      "end_sec": 57.12,
+      "text_pt": "a Daniela Ruah, que é dos Estados Unidos.",
+      "assigned_speaker": "shot12_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 12,
+          "track_id": 0,
+          "correlation": -0.0072,
+          "n_samples": 121
+        }
+      ]
+    },
+    {
+      "segment_id": 11,
+      "start_sec": 57.12,
+      "end_sec": 59.13,
+      "text_pt": "Ela participa em Investigação Criminal,",
+      "assigned_speaker": "shot12_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 12,
+          "track_id": 0,
+          "correlation": -0.1331,
+          "n_samples": 101
+        }
+      ]
+    },
+    {
+      "segment_id": 12,
+      "start_sec": 59.13,
+      "end_sec": 60.86,
+      "text_pt": "que dá no programa da Fox.",
+      "assigned_speaker": "shot12_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 12,
+          "track_id": 0,
+          "correlation": 0.0303,
+          "n_samples": 86
+        }
+      ]
+    },
+    {
+      "segment_id": 13,
+      "start_sec": 60.86,
+      "end_sec": 65.13,
+      "text_pt": "Assim de repente, Mariza. Mariza.",
+      "assigned_speaker": "shot13_track0",
+      "status": "assigned_single_candidate",
+      "candidates": [
+        {
+          "shot_id": 13,
+          "track_id": 0,
+          "correlation": 0.495,
+          "n_samples": 190
+        }
+      ]
+    },
+    {
+      "segment_id": 14,
+      "start_sec": 65.13,
+      "end_sec": 66.6,
+      "text_pt": "O que é fado?",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": 0.1949,
+          "n_samples": 69
+        }
+      ]
+    },
+    {
+      "segment_id": 15,
+      "start_sec": 66.6,
+      "end_sec": 70.07,
+      "text_pt": "Fado é um estilo de música portuguesa,",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": 0.0825,
+          "n_samples": 174
+        }
+      ]
+    },
+    {
+      "segment_id": 16,
+      "start_sec": 70.07,
+      "end_sec": 75.28,
+      "text_pt": "que nós portugueses começamos a cantar por uma questão de...",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": -0.2662,
+          "n_samples": 261
+        }
+      ]
+    },
+    {
+      "segment_id": 17,
+      "start_sec": 75.28,
+      "end_sec": 77.94,
+      "text_pt": "começou com a Amália Rodrigues,",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": -0.1203,
+          "n_samples": 134
+        }
+      ]
+    },
+    {
+      "segment_id": 18,
+      "start_sec": 77.94,
+      "end_sec": 82.08,
+      "text_pt": "foi a nossa embaixadora e a seguir vieram muito mais.",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": -0.1176,
+          "n_samples": 208
+        }
+      ]
+    },
+    {
+      "segment_id": 19,
+      "start_sec": 82.08,
+      "end_sec": 86.09,
+      "text_pt": "Uma delas a Mariza, que canta um fado,",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": -0.0913,
+          "n_samples": 201
+        }
+      ]
+    },
+    {
+      "segment_id": 20,
+      "start_sec": 86.09,
+      "end_sec": 88.76,
+      "text_pt": "ligeiramente diferente do que a Amália cantava,",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": -0.1965,
+          "n_samples": 134
+        }
+      ]
+    },
+    {
+      "segment_id": 21,
+      "start_sec": 88.76,
+      "end_sec": 90.09,
+      "text_pt": "só aquele fado assim um bocado mais sofrido.",
+      "assigned_speaker": "shot14_track0",
+      "status": "assigned_single_candidate_low_conf",
+      "candidates": [
+        {
+          "shot_id": 14,
+          "track_id": 0,
+          "correlation": -0.1708,
+          "n_samples": 63
+        }
+      ]
+    }
+  ]
+}
