@@ -52,14 +52,18 @@ conda install -c conda-forge tesseract
 python3 scripts/01_detect_shots.py portuguese_01
 python3 scripts/02_segment_captions.py portuguese_01
 python3 scripts/03_ocr_captions.py portuguese_01
-#conda deactivate
 
 # Step 4: face detection/tracking (TensorFlow via MTCNN)
-#python3.11 -m venv venv_face
-#source venv_face/bin/activate
 
 pip install -r scripts/requirements/requirements-step4-face.txt
 python3 scripts/04_track_faces.py portuguese_01
+python3 scripts/04b_cluster_faces.py portuguese_01
+
+# Create a file - data/corrections/portuguese_01_corrections.json, by looking at "data/episodes/portuguese_01_face_identities.json" and "outputs/portuguese_01_borderline_review.png". The png file will have the borderline confused speaker faces, or they can be some random image as well. The left column of the png file is what is confused, and the rigth column is what it is confused with. If the left and the rigfht column belong to the same person, identify the "shot" name from the png file and open the "data/episodes/portuguese_01_face_identities.json" file to get the exact person identity and include them in the "merge" section of "*corrections.json" file. If the left and right column belong to different persons, nothing needs to be done. And finally, if the images (left and right) do not belong to any humans at all, then add them under the "exclude" list in the "*corrections.json" file.
+
+# Once the "*corrections.json" file is created, execute the following command.
+python3 scripts/04c_apply_identity_corrections.py portuguese_01 data/corrections/portuguese_01_corrections.json
+
 conda deactivate
 
 # Step 5: heuristic ASD baseline (librosa)
@@ -72,7 +76,6 @@ conda activate avprep_2
 pip install -r scripts/requirements/requirements-step5-heuristic.txt
 
 python3 scripts/05_active_speaker.py portuguese_01
-conda deactivate
 
 # Step 5b: real TalkNet-ASD (PyTorch, needs a CUDA GPU)
 python3.11 -m venv venv_talknet
@@ -81,8 +84,13 @@ source venv_talknet/bin/activate
 # https://pytorch.org/get-started/locally/ -- then the rest:
 pip install torch torchvision torchaudio   # use the command from the selector above instead of this bare line
 pip install -r scripts/requirements/requirements-step5b-talknet.txt
+
 git clone https://github.com/TaoRuijie/TalkNet-ASD third_party/TalkNet-ASD
-python3 scripts/05b_active_speaker_talknet.py portuguese_01
+LD_LIBRARY_PATH="/opt/amazon/openmpi/lib:/usr/local/lib:/usr/lib" python3 scripts/05b_active_speaker_talknet.py portuguese_01
+
+# Execute as shown below if you want to make sure that the script doesn't take too much memory
+LD_LIBRARY_PATH="/opt/amazon/openmpi/lib:/usr/local/lib:/usr/lib" python3 scripts/05b_active_speaker_talknet.py portuguese_01 --max-gpu-mem-mb 1200
+
 deactivate
 ```
 

@@ -82,15 +82,21 @@ def ensure_pretrained_model():
     if os.path.isfile(model_path):
         return model_path
     print(f"Pretrained model not found, downloading via gdown (id={PRETRAIN_GDRIVE_ID})...")
-    cmd = f"gdown --id {PRETRAIN_GDRIVE_ID} -O {model_path}"
+    # Note: gdown removed the `--id` flag in newer releases -- the file id/URL is
+    # now just a plain positional argument (verified against gdown 6.1.1).
+    cmd = f"gdown {PRETRAIN_GDRIVE_ID} -O {model_path}"
     ret = subprocess.call(cmd, shell=True)
     if ret != 0 or not os.path.isfile(model_path):
         raise SystemExit(
-            "gdown failed. If Google Drive's automated-download limit was hit, "
-            f"download manually from the file id {PRETRAIN_GDRIVE_ID} and place at {model_path}"
+            "gdown failed. This file is popular enough that Google Drive's automated-download "
+            "abuse detection blocks it fairly often (error mentions 'many accesses' or wrong "
+            "permissions) -- this is common on cloud/datacenter IPs, not specific to this script. "
+            "Fastest fix: open this URL in a real logged-in browser (any machine), download the "
+            "~50MB file manually, then scp it to this server:\n"
+            f"  https://drive.google.com/uc?id={PRETRAIN_GDRIVE_ID}\n"
+            f"  scp <downloaded file> <this server>:{model_path}"
         )
     return model_path
-
 
 def reencode_and_extract_frames(video_path, work_dir):
     """Matches demoTalkNet.py's own preprocessing exactly: re-encode to 25fps,
@@ -251,14 +257,31 @@ def score_track(talknet_model, avi_path, wav_path):
     return np.round(np.mean(np.array(all_scores), axis=0), 3).astype(float)
 
 
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("video_id")
     parser.add_argument("--data-dir", default=os.path.join(os.path.dirname(__file__), "..", "data"))
+    parser.add_argument("--max-gpu-mem-mb", type=int, default=None,
+                         help="Hard-cap PyTorch's GPU memory usage to this many MB on the current "
+                              "device. Useful on a shared GPU that's already near capacity from "
+                              "another job -- this makes an over-budget allocation fail immediately "
+                              "with a clear PyTorch OOM error instead of behaving unpredictably. "
+                              "Note this only makes THIS process's own behavior predictable; it "
+                              "can't prevent a genuine race with another process also requesting "
+                              "memory on an already-saturated GPU at the same moment.")
     args = parser.parse_args()
 
     ensure_repo_on_path()
     from talkNet import talkNet  # noqa: E402  (needs sys.path modified first)
+
+    if args.max_gpu_mem_mb is not None:
+        import torch
+        total_mb = torch.cuda.get_device_properties(0).total_memory / (1024 ** 2)
+        fraction = min(1.0, args.max_gpu_mem_mb / total_mb)
+        torch.cuda.set_per_process_memory_fraction(fraction, device=0)
+        print(f"Capped GPU memory: {args.max_gpu_mem_mb}MB requested "
+              f"({fraction*100:.1f}% of {total_mb:.0f}MB total on device 0)")
 
     video_path = os.path.join(args.data_dir, "raw", f"{args.video_id}.mp4")
     shots_path = os.path.join(args.data_dir, "shots", f"{args.video_id}_shots.json")
@@ -306,6 +329,26 @@ def main():
         })
 
     # Map each track's per-frame scores onto caption segments by time window.
+    # Map each track's per-frame scores onto caption segments by time window.
+    #
+    # Margin-based ambiguity check, ported from 05_active_speaker.py -- script 06's
+    # comparison surfaced several 05b "assigned_low_confidence" calls that were
+    # actually near-ties between the top two candidates (e.g. a shot-transition
+    # segment decided by a margin of just 0.04), exactly the kind of case that
+    # should surface as ambiguous rather than a confident pick.
+    #
+    # CAVEAT on the threshold itself: TalkNet's scores are unbounded raw logits
+    # (observed roughly -2.5 to +3 on this video), not a bounded correlation like
+    # the heuristic's -- so 0.2 is a starting point based on the margins actually
+    # observed (the known-ambiguous transition case: 0.04; many confident cases:
+    # >0.5), not an empirically measured constant the way MIN_OCR_CONFIDENCE was.
+    # This also doesn't use any cross-segment context -- e.g. a shot where the
+    # same track wins by a modest margin across many consecutive segments is
+    # probably reliable even if any single segment's margin looks marginal, but
+    # this check has no way to know that. Worth revisiting the threshold once
+    # you've seen how many segments it reclassifies as ambiguous.
+    MULTI_CANDIDATE_MARGIN = 0.2
+
     results = []
     for seg in transcript:
         seg_f0 = int(round(seg["start_sec"] * TARGET_FPS))
@@ -322,14 +365,23 @@ def main():
             })
         candidates.sort(key=lambda c: c["mean_score"], reverse=True)
 
-        if candidates and candidates[0]["mean_score"] >= 0:
-            speaker_id = f"shot{candidates[0]['shot_id']}_track{candidates[0]['track_id']}"
-            status = "assigned"
-        elif candidates:
-            speaker_id = f"shot{candidates[0]['shot_id']}_track{candidates[0]['track_id']}"
-            status = "assigned_low_confidence"  # best available, but TalkNet itself scored it as more "not speaking"
-        else:
+        if len(candidates) == 0:
             speaker_id, status = None, "uncertain_no_confident_face"
+        elif len(candidates) == 1:
+            best = candidates[0]
+            speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+            status = "assigned" if best["mean_score"] >= 0 else "assigned_low_confidence"
+        else:
+            best, second = candidates[0], candidates[1]
+            margin = best["mean_score"] - second["mean_score"]
+            if margin < MULTI_CANDIDATE_MARGIN:
+                speaker_id, status = None, "uncertain_ambiguous_multi_candidate"
+            elif best["mean_score"] >= 0:
+                speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+                status = "assigned"
+            else:
+                speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+                status = "assigned_low_confidence"
 
         results.append({
             "segment_id": seg["segment_id"], "start_sec": seg["start_sec"], "end_sec": seg["end_sec"],
