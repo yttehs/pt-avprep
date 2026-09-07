@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline Review</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg: #14161a;
+  --panel: #1a1d24;
+  --panel-2: #20242c;
+  --border: #2a2e38;
+  --border-soft: #23262e;
+  --text: #e8e9ed;
+  --text-dim: #8b8f9b;
+  --text-faint: #565b68;
+  --accent: #5eead4;
+  --accent-dim: rgba(94,234,212,0.14);
+  --danger: #f97066;
+  --radius: 6px;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; }
+html,body{ margin:0; padding:0; }
+[hidden]{ display: none !important; }
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  padding: 20px;
+}
+@media (prefers-reduced-motion: reduce){
+  * { transition: none !important; animation: none !important; }
+}
+
+.app{ max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- Header ---------- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.brand{ display:flex; align-items:baseline; gap:10px; }
+.brand-eyebrow{
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--accent);
+  text-transform: uppercase;
+}
+.brand h1{ font-size: 19px; font-weight: 700; margin:0; letter-spacing: -0.01em; }
+.file-controls{ display:flex; gap:8px; flex-wrap: wrap; }
+.file-btn, .ghost-btn{
+  font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--text);
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 8px 14px; cursor: pointer; display:inline-flex; align-items:center; gap:8px;
+  transition: border-color .15s, background .15s;
+}
+.file-btn:hover, .ghost-btn:hover{ border-color: var(--accent); background: var(--accent-dim); }
+.file-btn:focus-visible, .ghost-btn:focus-visible, button:focus-visible, [tabindex]:focus-visible{
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.ghost-btn{ background: transparent; color: var(--text-dim); }
+.file-btn.loaded{ border-color: var(--accent); }
+.file-name{ font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); margin-left: 2px; display:block; margin-top:2px; }
+
+/* ---------- Layout ---------- */
+.layout{ display:grid; grid-template-columns: 1fr 260px; gap: 16px; }
+@media (max-width: 760px){ .layout{ grid-template-columns: 1fr; } }
+
+.media-pane{ position: relative; }
+.media-container{
+  background: #000; border-radius: var(--radius); border: 1px solid var(--border);
+  aspect-ratio: 16/9; display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.media-container video{ width:100%; height:100%; object-fit: contain; background:#000; }
+.empty-state{ text-align:center; color: var(--text-faint); padding: 20px; }
+.empty-icon{ font-size: 22px; margin-bottom: 8px; opacity: .5; }
+.empty-state p{ font-size: 13px; margin: 0; }
+
+/* ---------- Live overlay: caption text + per-source speaker chips ---------- */
+.overlay-panel{
+  margin-top: 10px; background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--radius);
+  padding: 12px 14px; min-height: 20px;
+}
+.overlay-caption{ font-size: 15px; line-height:1.5; color: var(--text); }
+.overlay-caption.empty{ color: var(--text-faint); font-style: italic; }
+.overlay-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
+.chip{
+  display:inline-flex; align-items:center; gap:7px; font-family: var(--mono); font-size: 11.5px;
+  background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 100px; padding: 5px 10px 5px 8px;
+}
+.chip .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.chip .src{ color: var(--text-faint); }
+.chip .status{ color: var(--text-faint); font-size: 10.5px; }
+
+/* ---------- Legend ---------- */
+.legend-pane h2{
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-faint);
+  margin: 0 0 10px 2px; font-weight: 700;
+}
+.legend-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height: 480px; overflow-y:auto; }
+.legend-empty{ font-size: 12px; color: var(--text-faint); padding: 10px 2px; }
+.legend-item{
+  display:flex; align-items:center; gap:9px; background: var(--panel); border:1px solid var(--border-soft);
+  border-radius: var(--radius); padding: 9px 10px; cursor:pointer; transition: border-color .15s, opacity .15s;
+}
+.legend-item:hover{ border-color: var(--text-faint); }
+.legend-item.isolated{ border-color: var(--accent); background: var(--accent-dim); }
+.legend-item.dimmed{ opacity: .35; }
+.legend-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+.legend-meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.legend-name{ font-family: var(--mono); font-size: 12.5px; font-weight: 600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.legend-stats{ font-size: 10.5px; color: var(--text-faint); }
+
+/* ---------- Timeline ---------- */
+.timeline-pane{
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px 16px;
+}
+.timeline-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; }
+.timeline-label{ font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-faint); font-weight:700; }
+.timeline-duration{ font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
+
+.timeline-scroll{ position: relative; overflow-x: auto; padding-bottom: 2px; }
+
+.timeline-body{ display:grid; grid-template-columns: 120px 1fr; column-gap: 10px; min-width: 100%; }
+.tl-labels{ display:flex; flex-direction:column; }
+.tl-corner{ height: 20px; }
+.lane-label{
+  height: 22px; margin-top: 6px; display:flex; align-items:center;
+  font-family: var(--mono); font-size: 10.5px; color: var(--text-dim);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition: opacity .15s;
+}
+.lane-label.dimmed{ opacity: .25; }
+.source-header{
+  height: 20px; margin-top: 14px; display:flex; align-items:center;
+  font-family: var(--sans); font-size: 11px; font-weight: 700; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.source-header:first-child{ margin-top: 0; }
+.source-spacer{ height: 20px; margin-top: 14px; }
+.source-spacer:first-child{ margin-top: 0; }
+
+.tl-track{ position: relative; }
+
+.ruler{ position: relative; height: 20px; border-bottom: 1px solid var(--border-soft); }
+.tick{ position:absolute; top:0; bottom:0; display:flex; align-items:flex-end; }
+.tick::before{ content:''; position:absolute; bottom:0; width:1px; height:6px; background: var(--text-faint); }
+.tick span{ font-family: var(--mono); font-size: 10px; color: var(--text-faint); margin-left: 4px; transform: translateY(-2px); }
+
+.lanes{ display:flex; flex-direction:column; margin-top: 8px; }
+.lanes-empty{ font-size: 12px; color: var(--text-faint); padding: 30px 0; text-align:center; }
+.lane{ margin-top: 6px; transition: opacity .15s; }
+.lane:first-child{ margin-top: 0; }
+.lane.dimmed{ opacity: .25; }
+.lane-track{
+  position: relative; height: 22px; background: var(--panel-2); border-radius: 3px; cursor: pointer;
+  border: 1px solid var(--border-soft);
+}
+.seg{
+  position:absolute; top: 2px; bottom: 2px; border-radius: 2px; opacity: .9; min-width: 2px;
+}
+.seg:hover{ opacity: 1; outline: 1px solid rgba(255,255,255,0.4); }
+.seg.uncertain{ background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.25) 0 3px, transparent 3px 6px); }
+
+.playhead{
+  position:absolute; top: 0; bottom: 0; width: 1px; background: var(--accent); pointer-events:none;
+  box-shadow: 0 0 6px var(--accent); z-index: 2;
+}
+.playhead::before{
+  content:''; position:absolute; top:-1px; left:50%; transform: translateX(-50%);
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--accent);
+}
+
+.hint{ font-size: 11.5px; color: var(--text-faint); margin-top: 10px; line-height:1.5; }
+.hint b{ color: var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div>
+        <div class="brand-eyebrow">Pipeline QA</div>
+        <h1>Caption &amp; Speaker Review</h1>
+      </div>
+    </div>
+    <div class="file-controls">
+      <label class="file-btn" id="mediaBtn">Load video<input type="file" id="mediaInput" accept="video/*" hidden></label>
+      <label class="file-btn" id="jsonABtn">Load JSON A<input type="file" id="jsonAInput" accept=".json" hidden></label>
+      <label class="file-btn" id="jsonBBtn">Load JSON B (compare, optional)<input type="file" id="jsonBInput" accept=".json" hidden></label>
+      <button class="ghost-btn" id="clearBBtn" hidden>Remove JSON B</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="media-pane">
+      <div class="media-container empty" id="mediaContainer">
+        <div class="empty-state">
+          <div class="empty-icon">&#9654;</div>
+          <p>Load a video file to begin</p>
+        </div>
+      </div>
+      <div class="overlay-panel" id="overlayPanel" hidden>
+        <div class="overlay-caption empty" id="overlayCaption">No caption at this time</div>
+        <div class="overlay-chips" id="overlayChips"></div>
+      </div>
+    </section>
+
+    <aside class="legend-pane">
+      <h2>Speakers / Tracks</h2>
+      <ul class="legend-list" id="legendList">
+        <li class="legend-empty">Load a JSON file to see speakers</li>
+      </ul>
+    </aside>
+  </main>
+
+  <section class="timeline-pane">
+    <div class="timeline-header">
+      <span class="timeline-label">Timeline</span>
+      <span class="timeline-duration" id="totalDuration">--:--</span>
+    </div>
+    <div class="timeline-scroll" id="timelineScroll">
+      <div class="timeline-body">
+        <div class="tl-labels" id="tlLabels">
+          <div class="tl-corner"></div>
+        </div>
+        <div class="tl-track" id="tlTrack">
+          <div class="ruler" id="ruler"></div>
+          <div class="lanes" id="lanes">
+            <div class="lanes-empty">No data loaded</div>
+          </div>
+          <div class="playhead" id="playhead" hidden></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint"><b>Tip:</b> click any lane to seek. Click a speaker/track in the legend to isolate it across
+      every group. <b>JSON A/B</b> accept this pipeline's own output directly &mdash; a plain
+      <code>*_transcript.json</code> (caption text only, one neutral lane, for checking OCR accuracy against the
+      burned-in captions), a <code>*_speaker_attribution.json</code> / <code>*_speaker_attribution_talknet.json</code>
+      (per-track lanes + status), or <code>*_speaker_attribution_final.json</code> (05d's combined face+voice
+      result). Load two at once to visually compare every disagreement while watching the video &mdash; e.g.
+      A = <code>*_speaker_attribution_talknet.json</code>, B = <code>*_speaker_attribution_final.json</code>, to see
+      exactly which segments voice overrode or resolved. The same physical identity gets the same color and lane
+      position in both groups, so a difference shows up as color appearing in <i>different</i> rows across the
+      two groups at the same timestamp. Striped blocks are segments the pipeline marked uncertain/not confident.</p>
+  </section>
+
+</div>
+
+<script>
+const PALETTE = ['#f97066', '#60a5fa', '#fbbf24', '#a78bfa', '#34d399', '#f472b6', '#fb923c', '#38bdf8',
+                  '#c084fc', '#4ade80', '#facc15', '#f87171', '#22d3ee', '#e879f9', '#a3e635', '#fb7185'];
+const UNCERTAIN_ID = '\u2014 uncertain \u2014';
+const CAPTION_ID = 'Caption';
+
+// ---- Data layer (schema detection + global speaker/color alignment) ----
+// Kept as pure functions with no DOM access, so this logic is unit-testable
+// on its own -- validated against real 03/05/05b output before this file
+// was written around it.
+
+function detectAndConvert(data) {
+  if (Array.isArray(data.transcript)) {
+    return {
+      kind: 'transcript',
+      segments: data.transcript.map(s => ({
+        start: s.start_sec, end: s.end_sec, text: s.text_pt || '',
+        speaker: null, status: null,
+      })).sort((a, b) => a.start - b.start),
+    };
+  }
+  if (Array.isArray(data.attribution)) {
+    // 05d's combined output (final_speaker/final_status) uses different field
+    // names than 05/05b's own output (assigned_speaker/status) -- auto-detect
+    // which schema this is from the first row rather than requiring the user
+    // to know or convert anything.
+    const isFinalSchema = data.attribution.length > 0 && 'final_speaker' in data.attribution[0];
+    return {
+      kind: 'attribution',
+      segments: data.attribution.map(s => isFinalSchema ? {
+        start: s.start_sec, end: s.end_sec, text: s.text_pt || '',
+        speaker: s.final_speaker || UNCERTAIN_ID, status: s.final_status || null,
+      } : {
+        start: s.start_sec, end: s.end_sec, text: s.text_pt || '',
+        speaker: s.assigned_speaker || UNCERTAIN_ID, status: s.status || null,
+      }).sort((a, b) => a.start - b.start),
+    };
+  }
+  throw new Error('Unrecognized JSON: expected a "transcript" or "attribution" array '
+    + '(i.e. the output of 03_ocr_captions.py, 05_active_speaker.py, 05b_active_speaker_talknet.py, '
+    + 'or 05d_voice_resolve.py).');
+}
+
+function buildGlobalSpeakers(sourcesArr) {
+  const order = [];
+  sourcesArr.forEach(src => {
+    src.segments.forEach(s => {
+      const id = s.speaker === null ? CAPTION_ID : s.speaker;
+      if (!order.includes(id)) order.push(id);
+    });
+  });
+  order.sort((a, b) => (a === UNCERTAIN_ID) - (b === UNCERTAIN_ID));
+  const colorOf = {};
+  order.forEach((id, i) => { colorOf[id] = id === UNCERTAIN_ID ? '#565b68' : PALETTE[i % PALETTE.length]; });
+  return { order, colorOf };
+}
+
+function activeSegmentsAt(segments, t) {
+  return segments.filter(s => t >= s.start && t <= s.end);
+}
+
+// ---- App state ----
+let sourceA = null;   // {label, kind, segments}
+let sourceB = null;
+let globalOrder = [];
+let colorOf = {};
+let mediaEl = null;
+let duration = 0;
+let isolated = null;
+let rafId = null;
+
+const els = {};
+['mediaInput','jsonAInput','jsonBInput','mediaBtn','jsonABtn','jsonBBtn','clearBBtn',
+ 'mediaContainer','overlayPanel','overlayCaption','overlayChips','legendList',
+ 'ruler','lanes','tlLabels','playhead','totalDuration'].forEach(id => {
+  els[id] = document.getElementById(id);
+});
+
+function formatTime(s){
+  if (!isFinite(s) || s < 0) s = 0;
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
+  return h > 0
+    ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function labelForKind(kind, filename){
+  const base = kind === 'transcript' ? 'Transcript (OCR only)' : 'Attribution';
+  return `${base} \u2014 ${filename}`;
+}
+
+function loadJSONFile(file, slot){
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    let data;
+    try { data = JSON.parse(ev.target.result); }
+    catch (e) { alert('Could not parse JSON: ' + e.message); return; }
+    let src;
+    try { src = detectAndConvert(data); }
+    catch (e) { alert(e.message); return; }
+    src.label = labelForKind(src.kind, file.name);
+    src.filename = file.name;
+    if (slot === 'A') { sourceA = src; markLoaded(els.jsonABtn, file.name); }
+    else { sourceB = src; markLoaded(els.jsonBBtn, file.name); els.clearBBtn.hidden = false; }
+    recompute();
+  };
+  reader.readAsText(file);
+}
+
+function markLoaded(btn, filename){
+  btn.classList.add('loaded');
+  let tag = btn.querySelector('.file-name');
+  if (!tag) { tag = document.createElement('span'); tag.className = 'file-name'; btn.appendChild(tag); }
+  tag.textContent = filename;
+}
+
+function recompute(){
+  const active = [sourceA, sourceB].filter(Boolean);
+  const g = buildGlobalSpeakers(active);
+  globalOrder = g.order; colorOf = g.colorOf;
+  const maxEnd = active.reduce((m, src) => Math.max(m, src.segments.reduce((mm, s) => Math.max(mm, s.end), 0)), 0);
+  duration = Math.max(duration, maxEnd);
+  isolated = null;
+  renderLegend();
+  renderTimeline();
+}
+
+// ---- Legend ----
+function renderLegend(){
+  if (globalOrder.length === 0){
+    els.legendList.innerHTML = '<li class="legend-empty">Load a JSON file to see speakers</li>';
+    return;
+  }
+  els.legendList.innerHTML = '';
+  globalOrder.forEach(id => {
+    const countIn = src => src ? src.segments.filter(s => (s.speaker === null ? CAPTION_ID : s.speaker) === id).length : 0;
+    const nA = countIn(sourceA), nB = countIn(sourceB);
+    const stats = sourceB ? `A:${nA} B:${nB} segs` : `${nA} segs`;
+    const li = document.createElement('li');
+    li.className = 'legend-item' + (isolated === id ? ' isolated' : '');
+    li.tabIndex = 0;
+    li.innerHTML = `
+      <span class="legend-dot" style="background:${colorOf[id]}"></span>
+      <span class="legend-meta">
+        <span class="legend-name">${escapeHtml(id)}</span>
+        <span class="legend-stats">${stats}</span>
+      </span>`;
+    li.addEventListener('click', () => {
+      isolated = isolated === id ? null : id;
+      renderLegend();
+      applyIsolation();
+    });
+    els.legendList.appendChild(li);
+  });
+}
+
+function applyIsolation(){
+  document.querySelectorAll('.lane, .lane-label').forEach(el => {
+    el.classList.toggle('dimmed', isolated !== null && el.dataset.speakerId !== isolated);
+  });
+}
+
+function niceInterval(totalSec){
+  const candidates = [5,10,15,30,60,120,300,600,900];
+  for (const c of candidates) if (totalSec / c <= 12) return c;
+  return 1800;
+}
+
+// ---- Timeline: one lane group per loaded source, sharing one global row
+// order/color map so the same track lines up across groups. ----
+function renderTimeline(){
+  els.totalDuration.textContent = duration > 0 ? formatTime(duration) : '--:--';
+
+  els.ruler.innerHTML = '';
+  if (duration > 0){
+    const step = niceInterval(duration);
+    for (let t = 0; t <= duration; t += step){
+      const tick = document.createElement('div');
+      tick.className = 'tick';
+      tick.style.left = `${(t/duration)*100}%`;
+      tick.innerHTML = `<span>${formatTime(t)}</span>`;
+      els.ruler.appendChild(tick);
+    }
+  }
+
+  els.lanes.innerHTML = '';
+  els.tlLabels.querySelectorAll('.lane-label, .source-header, .source-spacer').forEach(el => el.remove());
+
+  const active = [sourceA, sourceB].filter(Boolean);
+  if (active.length === 0){
+    els.lanes.innerHTML = '<div class="lanes-empty">No data loaded</div>';
+    return;
+  }
+
+  active.forEach((src, srcIdx) => {
+    const letter = active.length > 1 ? (srcIdx === 0 ? 'A: ' : 'B: ') : '';
+    const header = document.createElement('div');
+    header.className = 'source-header';
+    header.textContent = letter + src.label;
+    els.tlLabels.appendChild(header);
+    const spacer = document.createElement('div');
+    spacer.className = 'source-spacer';
+    els.lanes.appendChild(spacer);
+
+    globalOrder.forEach(id => {
+      const segsForRow = src.segments.filter(s => (s.speaker === null ? CAPTION_ID : s.speaker) === id);
+
+      const label = document.createElement('div');
+      label.className = 'lane-label';
+      label.dataset.speakerId = id;
+      label.textContent = id;
+      els.tlLabels.appendChild(label);
+
+      const lane = document.createElement('div');
+      lane.className = 'lane';
+      lane.dataset.speakerId = id;
+
+      const track = document.createElement('div');
+      track.className = 'lane-track';
+      track.addEventListener('click', (e) => {
+        if (!mediaEl || duration === 0) return;
+        const rect = track.getBoundingClientRect();
+        const frac = (e.clientX - rect.left) / rect.width;
+        mediaEl.currentTime = Math.max(0, Math.min(duration, frac * duration));
+      });
+
+      segsForRow.forEach(s => {
+        const block = document.createElement('div');
+        block.className = 'seg' + (id === UNCERTAIN_ID ? ' uncertain' : '');
+        block.style.left = `${(s.start/duration)*100}%`;
+        block.style.width = `${Math.max(((s.end-s.start)/duration)*100, 0.15)}%`;
+        block.style.background = colorOf[id];
+        const statusPart = s.status ? `\n${s.status}` : '';
+        block.title = s.text && s.text.trim()
+          ? `${id}  ${formatTime(s.start)} \u2192 ${formatTime(s.end)}${statusPart}\n${s.text}`
+          : `${id}  ${formatTime(s.start)} \u2192 ${formatTime(s.end)}${statusPart}`;
+        track.appendChild(block);
+      });
+
+      lane.appendChild(track);
+      els.lanes.appendChild(lane);
+    });
+  });
+
+  applyIsolation();
+  els.playhead.hidden = duration === 0;
+}
+
+// ---- Live overlay during playback ----
+function renderOverlay(t){
+  const active = [sourceA, sourceB].filter(Boolean);
+  if (active.length === 0) { els.overlayPanel.hidden = true; return; }
+  els.overlayPanel.hidden = false;
+
+  // Caption text: identical across sources derived from the same transcript,
+  // so just show it once, from whichever source has an active segment first.
+  let text = '';
+  for (const src of active) {
+    const hit = activeSegmentsAt(src.segments, t).find(s => s.text && s.text.trim());
+    if (hit) { text = hit.text; break; }
+  }
+  els.overlayCaption.textContent = text || 'No caption at this time';
+  els.overlayCaption.classList.toggle('empty', !text);
+
+  // Per-source speaker/status chips, so attribution disagreements are visible
+  // as text too, not just as color position on the timeline.
+  els.overlayChips.innerHTML = '';
+  active.forEach((src, i) => {
+    if (src.kind !== 'attribution') return;
+    const hit = activeSegmentsAt(src.segments, t)[0];
+    if (!hit) return;
+    const id = hit.speaker;
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `<span class="dot" style="background:${colorOf[id] || '#8b8f9b'}"></span>
+      <span class="src">${active.length > 1 ? (i === 0 ? 'A' : 'B') : ''}</span>
+      ${escapeHtml(id)} <span class="status">${escapeHtml(hit.status || '')}</span>`;
+    els.overlayChips.appendChild(chip);
+  });
+}
+
+function updatePlayheadPosition(){
+  if (!mediaEl || duration === 0) return;
+  const t = mediaEl.currentTime;
+  const frac = Math.max(0, Math.min(1, t / duration));
+  els.playhead.style.left = `${frac * 100}%`;
+  renderOverlay(t);
+  if (!mediaEl.paused && !mediaEl.ended){
+    rafId = requestAnimationFrame(updatePlayheadPosition);
+  }
+}
+
+function loadMediaFile(file){
+  const url = URL.createObjectURL(file);
+  els.mediaContainer.innerHTML = '';
+  els.mediaContainer.classList.remove('empty');
+
+  mediaEl = document.createElement('video');
+  mediaEl.src = url;
+  mediaEl.controls = true;
+
+  mediaEl.addEventListener('loadedmetadata', () => {
+    duration = Math.max(duration, mediaEl.duration || 0);
+    renderTimeline();
+  });
+  mediaEl.addEventListener('play', () => { rafId = requestAnimationFrame(updatePlayheadPosition); });
+  mediaEl.addEventListener('pause', () => { if (rafId) cancelAnimationFrame(rafId); updatePlayheadPosition(); });
+  mediaEl.addEventListener('seeked', updatePlayheadPosition);
+  mediaEl.addEventListener('timeupdate', () => { if (mediaEl.paused) updatePlayheadPosition(); });
+
+  els.mediaContainer.appendChild(mediaEl);
+  markLoaded(els.mediaBtn, file.name);
+}
+
+els.mediaInput.addEventListener('change', (e) => { const f = e.target.files[0]; if (f) loadMediaFile(f); });
+els.jsonAInput.addEventListener('change', (e) => { const f = e.target.files[0]; if (f) loadJSONFile(f, 'A'); });
+els.jsonBInput.addEventListener('change', (e) => { const f = e.target.files[0]; if (f) loadJSONFile(f, 'B'); });
+els.clearBBtn.addEventListener('click', () => {
+  sourceB = null;
+  els.jsonBBtn.classList.remove('loaded');
+  const tag = els.jsonBBtn.querySelector('.file-name'); if (tag) tag.remove();
+  els.jsonBInput.value = '';
+  els.clearBBtn.hidden = true;
+  recompute();
+});
+</script>
+</body>
+</html>
