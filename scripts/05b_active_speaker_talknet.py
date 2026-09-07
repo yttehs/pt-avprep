@@ -98,6 +98,7 @@ def ensure_pretrained_model():
         )
     return model_path
 
+
 def reencode_and_extract_frames(video_path, work_dir):
     """Matches demoTalkNet.py's own preprocessing exactly: re-encode to 25fps,
     extract mono 16kHz audio, dump every frame as a jpg."""
@@ -257,6 +258,20 @@ def score_track(talknet_model, avi_path, wav_path):
     return np.round(np.mean(np.array(all_scores), axis=0), 3).astype(float)
 
 
+def load_identity_map(video_id, data_dir):
+    """Loads the persistent within-video identity mapping from
+    04b_cluster_faces.py / 04c_apply_identity_corrections.py, if it exists.
+    Returns (track_to_identity, excluded_tracks) -- both empty if no
+    identity file is present, so this script still works standalone on a
+    video where face clustering hasn't been run (falls back to raw
+    shot{N}_track{M} labels, exactly as before this feature existed)."""
+    path = os.path.join(data_dir, "episodes", f"{video_id}_face_identities.json")
+    if not os.path.isfile(path):
+        return {}, set()
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("track_to_identity", {}), set(data.get("excluded_tracks", []))
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -306,6 +321,16 @@ def main():
     dense_tracks = build_dense_tracks(face_tracks_json, native_fps_original)
     print(f"  {len(dense_tracks)} track(s) usable (>= {MIN_TRACK_FRAMES_25FPS} frames at {TARGET_FPS}fps)")
 
+    identity_map, excluded_tracks = load_identity_map(args.video_id, args.data_dir)
+    if identity_map:
+        print(f"Loaded {len(set(identity_map.values()))} persistent identities "
+              f"({len(excluded_tracks)} track(s) excluded as non-speakers)")
+        before = len(dense_tracks)
+        dense_tracks = [tr for tr in dense_tracks
+                        if f"shot{tr['shot_id']}_track{tr['track_id']}" not in excluded_tracks]
+        if before != len(dense_tracks):
+            print(f"  skipped {before - len(dense_tracks)} track(s) excluded as non-speaker")
+
     print("Loading pretrained TalkNet-ASD model...")
     model_path = ensure_pretrained_model()
     talknet_model = talkNet()
@@ -315,7 +340,7 @@ def main():
     crops_dir = os.path.join(work_dir, "crops")
     os.makedirs(crops_dir, exist_ok=True)
 
-    track_scores = []  # list of {shot_id, track_id, frame(np array), score(np array)}
+    track_scores = []  # list of {shot_id, track_id, identity, frame(np array), score(np array)}
     for i, tr in enumerate(dense_tracks):
         prefix = os.path.join(crops_dir, f"shot{tr['shot_id']:03d}_track{tr['track_id']:03d}")
         print(f"  [{i+1}/{len(dense_tracks)}] scoring shot{tr['shot_id']}_track{tr['track_id']} "
@@ -323,12 +348,13 @@ def main():
         avi_path, wav_path = crop_track(frames_dir, audio_wav, tr, prefix)
         scores = score_track(talknet_model, avi_path, wav_path)
         n = min(len(scores), len(tr["frame"]))
+        raw_id = f"shot{tr['shot_id']}_track{tr['track_id']}"
         track_scores.append({
             "shot_id": tr["shot_id"], "track_id": tr["track_id"],
+            "identity": identity_map.get(raw_id, raw_id),  # falls back to raw label if no identity file
             "frame": tr["frame"][:n], "score": scores[:n],
         })
 
-    # Map each track's per-frame scores onto caption segments by time window.
     # Map each track's per-frame scores onto caption segments by time window.
     #
     # Margin-based ambiguity check, ported from 05_active_speaker.py -- script 06's
@@ -346,30 +372,62 @@ def main():
     # same track wins by a modest margin across many consecutive segments is
     # probably reliable even if any single segment's margin looks marginal, but
     # this check has no way to know that. Worth revisiting the threshold once
-    # you've seen how many segments it reclassifies as ambiguous.
+    # you've seen how many segments it reclassifies as ambiguous on this video.
     MULTI_CANDIDATE_MARGIN = 0.2
 
     results = []
     for seg in transcript:
         seg_f0 = int(round(seg["start_sec"] * TARGET_FPS))
         seg_f1 = int(round(seg["end_sec"] * TARGET_FPS))
-        candidates = []
+        raw_candidates = []
         for tsc in track_scores:
             mask = (tsc["frame"] >= seg_f0) & (tsc["frame"] <= seg_f1)
             if mask.sum() == 0:
                 continue
-            candidates.append({
+            raw_candidates.append({
+                "identity": tsc["identity"],
                 "shot_id": tsc["shot_id"], "track_id": tsc["track_id"],
                 "mean_score": round(float(np.mean(tsc["score"][mask])), 3),
                 "n_frames": int(mask.sum()),
             })
+
+        # Group by resolved identity before ranking: two fragmented tracks of
+        # the SAME person overlapping one segment must count as one candidate,
+        # not compete against each other in the margin/ambiguity check below.
+        # Unlike 05_active_speaker.py's heuristic (which keeps the single
+        # strongest fragment, since its correlation proxy is noisy and
+        # uneven-quality fragments shouldn't be blended), TalkNet's per-frame
+        # score is a meaningful, comparable quantity across fragments, so
+        # pooling is done as a frame-count-weighted average -- a fragment
+        # with more scored frames contributes proportionally more evidence.
+        by_identity = {}
+        for c in raw_candidates:
+            key = c["identity"]
+            if key not in by_identity:
+                by_identity[key] = {"identity": key, "shot_id": c["shot_id"], "track_id": c["track_id"],
+                                     "_weighted_sum": c["mean_score"] * c["n_frames"], "n_frames": c["n_frames"],
+                                     "_max_frames": c["n_frames"]}
+            else:
+                entry = by_identity[key]
+                entry["_weighted_sum"] += c["mean_score"] * c["n_frames"]
+                entry["n_frames"] += c["n_frames"]
+                # keep the shot/track of whichever fragment contributed the most frames, for debug traceability
+                if c["n_frames"] > entry["_max_frames"]:
+                    entry["shot_id"], entry["track_id"] = c["shot_id"], c["track_id"]
+                    entry["_max_frames"] = c["n_frames"]
+        candidates = []
+        for entry in by_identity.values():
+            entry["mean_score"] = round(entry["_weighted_sum"] / entry["n_frames"], 3)
+            del entry["_weighted_sum"]
+            entry.pop("_max_frames", None)
+            candidates.append(entry)
         candidates.sort(key=lambda c: c["mean_score"], reverse=True)
 
         if len(candidates) == 0:
             speaker_id, status = None, "uncertain_no_confident_face"
         elif len(candidates) == 1:
             best = candidates[0]
-            speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+            speaker_id = best["identity"]
             status = "assigned" if best["mean_score"] >= 0 else "assigned_low_confidence"
         else:
             best, second = candidates[0], candidates[1]
@@ -377,10 +435,10 @@ def main():
             if margin < MULTI_CANDIDATE_MARGIN:
                 speaker_id, status = None, "uncertain_ambiguous_multi_candidate"
             elif best["mean_score"] >= 0:
-                speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+                speaker_id = best["identity"]
                 status = "assigned"
             else:
-                speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+                speaker_id = best["identity"]
                 status = "assigned_low_confidence"
 
         results.append({
@@ -395,7 +453,8 @@ def main():
 
     print(f"\nTalkNet-ASD speaker attribution -> {out_path}\n")
     for r in results:
-        cand_str = ", ".join(f"{c['shot_id']}/{c['track_id']}:{c['mean_score']:+.2f}" for c in r["candidates"])
+        cand_str = ", ".join(f"{c['identity']}[{c['shot_id']}/{c['track_id']}]:{c['mean_score']:+.2f}"
+                              for c in r["candidates"])
         print(f"  [{r['start_sec']:6.2f}-{r['end_sec']:6.2f}s] {r['status']:24s} "
               f"speaker={r['assigned_speaker']}  ({cand_str})  \"{r['text_pt'][:40]}\"")
 

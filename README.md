@@ -84,12 +84,19 @@ source venv_talknet/bin/activate
 # https://pytorch.org/get-started/locally/ -- then the rest:
 pip install torch torchvision torchaudio   # use the command from the selector above instead of this bare line
 pip install -r scripts/requirements/requirements-step5b-talknet.txt
+pip install resemblyzer soundfile
+pip install "setuptools<81"
 
 git clone https://github.com/TaoRuijie/TalkNet-ASD third_party/TalkNet-ASD
 LD_LIBRARY_PATH="/opt/amazon/openmpi/lib:/usr/local/lib:/usr/lib" python3 scripts/05b_active_speaker_talknet.py portuguese_01
 
 # Execute as shown below if you want to make sure that the script doesn't take too much memory
 LD_LIBRARY_PATH="/opt/amazon/openmpi/lib:/usr/local/lib:/usr/lib" python3 scripts/05b_active_speaker_talknet.py portuguese_01 --max-gpu-mem-mb 1200
+
+
+# Voice based backend for speaker identification - especially to deal with speaker in the background without the face showing up on the video
+python3 scripts/05c_voice_enrollment.py portuguese_01
+python3 scripts/05d_voice_resolve.py portuguese_01
 
 deactivate
 ```

@@ -105,6 +105,7 @@ def mouth_motion_signal(cap, native_fps, track):
             prev_crop = None
             continue
         if prev_crop is not None:
+            # Resize to match in case mouth box size changed between frames.
             ph, pw = prev_crop.shape
             crop_r = cv2.resize(crop, (pw, ph))
             diff = np.mean(np.abs(crop_r.astype(np.float32) - prev_crop.astype(np.float32)))
@@ -136,6 +137,21 @@ def pearson_corr(a, b):
     return float(np.corrcoef(a, b)[0, 1]), mask.sum()
 
 
+def load_identity_map(video_id, data_dir):
+    """Loads the persistent within-video identity mapping from
+    04b_cluster_faces.py / 04c_apply_identity_corrections.py, if it exists.
+    Returns (track_to_identity, excluded_tracks) -- both empty if no
+    identity file is present, so this script still works standalone on a
+    video where face clustering hasn't been run (falls back to raw
+    shot{N}_track{M} labels, exactly as before this feature existed)."""
+    path = os.path.join(data_dir, "episodes", f"{video_id}_face_identities.json")
+    if not os.path.isfile(path):
+        return {}, set()
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return data.get("track_to_identity", {}), set(data.get("excluded_tracks", []))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("video_id")
@@ -153,6 +169,11 @@ def main():
     with open(transcript_path, encoding="utf-8") as f:
         transcript = json.load(f)["transcript"]
 
+    identity_map, excluded_tracks = load_identity_map(args.video_id, args.data_dir)
+    if identity_map:
+        print(f"Loaded {len(set(identity_map.values()))} persistent identities "
+              f"({len(excluded_tracks)} track(s) excluded as non-speakers)")
+
     ensure_audio_extracted(video_path, wav_path)
 
     print("Computing audio energy envelope...")
@@ -161,10 +182,16 @@ def main():
     cap = cv2.VideoCapture(video_path)
     native_fps = cap.get(cv2.CAP_PROP_FPS)
 
+    # Precompute each track's interpolated motion signal on the audio time grid.
     print("Computing mouth-motion signals per track...")
-    track_signals = []
+    track_signals = []  # list of dicts: shot_id, track_id, identity, t_range, signal
+    n_excluded = 0
     for shot in track_data["shots"]:
         for tr in shot["tracks"]:
+            raw_id = f"shot{shot['shot_id']}_track{tr['track_id']}"
+            if raw_id in excluded_tracks:
+                n_excluded += 1
+                continue
             ts, motions = mouth_motion_signal(cap, native_fps, tr)
             if len(ts) < MIN_OVERLAP_SAMPLES:
                 continue
@@ -173,11 +200,13 @@ def main():
             track_signals.append({
                 "shot_id": shot["shot_id"],
                 "track_id": tr["track_id"],
+                "identity": identity_map.get(raw_id, raw_id),  # falls back to raw label if no identity file
                 "t_range": t_range,
                 "signal": sig,
             })
     cap.release()
-    print(f"  {len(track_signals)} track(s) with usable motion signal")
+    print(f"  {len(track_signals)} track(s) with usable motion signal"
+          + (f" ({n_excluded} skipped as non-speaker)" if n_excluded else ""))
 
     results = []
     for seg in transcript:
@@ -185,21 +214,47 @@ def main():
         window_mask = (audio_times >= seg_start) & (audio_times <= seg_end)
         seg_audio = np.where(window_mask, audio_energy, np.nan)
 
-        candidates = []
+        raw_candidates = []
         for tsig in track_signals:
             lo, hi = tsig["t_range"]
             if hi < seg_start or lo > seg_end:
-                continue
+                continue  # no temporal overlap with this segment at all
             corr, n = pearson_corr(seg_audio, tsig["signal"])
             if corr is None:
                 continue
-            candidates.append({
+            raw_candidates.append({
+                "identity": tsig["identity"],
                 "shot_id": tsig["shot_id"], "track_id": tsig["track_id"],
                 "correlation": round(corr, 4), "n_samples": int(n),
             })
 
-        candidates.sort(key=lambda c: c["correlation"], reverse=True)
+        # Group by resolved identity before ranking: two fragmented tracks of
+        # the SAME person overlapping one segment (e.g. a brief re-detection
+        # within a busy shot) must count as one candidate, not compete against
+        # each other in the margin/ambiguity check below -- that check is
+        # meant to catch genuine ties between DIFFERENT people, and would
+        # misfire if a person's own fragmented tracks looked like a tie with
+        # themselves. Keep whichever fragment shows the strongest correlation
+        # as that identity's evidence (a noisy per-track proxy signal is safer
+        # to take the best-available reading from than to average across
+        # fragments of uneven quality).
+        by_identity = {}
+        for c in raw_candidates:
+            key = c["identity"]
+            if key not in by_identity or c["correlation"] > by_identity[key]["correlation"]:
+                by_identity[key] = c
+        candidates = sorted(by_identity.values(), key=lambda c: c["correlation"], reverse=True)
 
+        # Decision logic: correlation is a disambiguator between multiple candidates,
+        # not an absolute gate. If there's only one face on screen for this segment,
+        # visual presence itself is already decent evidence -- rejecting it whenever
+        # the noisy frame-diff/audio correlation happens to dip below some fixed
+        # threshold throws away true positives (this was checked: with an absolute
+        # threshold, ~50% of genuinely single-speaker segments in this clip were
+        # marked "uncertain" despite being visually unambiguous). We only reject a
+        # single candidate on a strong ANTI-correlation, which is a real signal that
+        # the one visible face is staying still while audio energy is present --
+        # e.g. an off-screen speaker over a reaction shot.
         STRONG_ANTICORR_REJECT = -0.35
         if len(candidates) == 0:
             speaker_id, status = None, "uncertain_no_confident_face"
@@ -208,13 +263,13 @@ def main():
             if best["correlation"] <= STRONG_ANTICORR_REJECT:
                 speaker_id, status = None, "uncertain_anticorrelated_mouth"
             else:
-                speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+                speaker_id = best["identity"]
                 status = "assigned_single_candidate" if best["correlation"] >= MIN_CORR_CONFIDENT else "assigned_single_candidate_low_conf"
         else:
             best, second = candidates[0], candidates[1]
             margin = best["correlation"] - second["correlation"]
             if margin >= 0.1:
-                speaker_id = f"shot{best['shot_id']}_track{best['track_id']}"
+                speaker_id = best["identity"]
                 status = "assigned_multi_candidate"
             else:
                 speaker_id, status = None, "uncertain_ambiguous_multi_candidate"
@@ -234,7 +289,8 @@ def main():
 
     print(f"\nSpeaker attribution -> {out_path}\n")
     for r in results:
-        cand_str = ", ".join(f"{c['shot_id']}/{c['track_id']}:{c['correlation']:+.2f}" for c in r["candidates"])
+        cand_str = ", ".join(f"{c['identity']}[{c['shot_id']}/{c['track_id']}]:{c['correlation']:+.2f}"
+                              for c in r["candidates"])
         print(f"  [{r['start_sec']:6.2f}-{r['end_sec']:6.2f}s] {r['status']:28s} "
               f"speaker={r['assigned_speaker']}  ({cand_str})  \"{r['text_pt'][:40]}\"")
 
